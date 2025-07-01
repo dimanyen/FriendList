@@ -1,6 +1,8 @@
 import Foundation
 
-enum StatusType:Int {
+// Use `Codable` enum to represent friend status instead of raw integers.
+// This improves type safety when decoding JSON data.
+enum StatusType: Int, Codable {
     case invited, finish, inviting
 }
 
@@ -9,7 +11,8 @@ struct FriendListResponse: Codable {
 }
 
 struct Friend: Codable, Hashable {
-    let status: Int // 0:invited, 1:finished, 2:inviting
+    // Replace `Int` with strongly typed `StatusType` for better readability.
+    let status: StatusType
     let name: String
     let isTop: String // "0", "1"
     let fid: String // "001"

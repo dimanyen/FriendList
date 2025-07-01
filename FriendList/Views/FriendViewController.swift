@@ -72,6 +72,17 @@ class FriendViewController: UIViewController {
                                    invites: self.viewModel?.invites ?? [])
             }
             .store(in: &cancellables)
+
+        // Show a simple alert whenever the view model reports an error.
+        viewModel.$errorMessage
+            .compactMap { $0 }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] message in
+                let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "OK", style: .default))
+                self?.present(alert, animated: true)
+            }
+            .store(in: &cancellables)
     }
     
     private func updateUserInfoView(_ user: User) {
@@ -171,8 +182,8 @@ class FriendViewController: UIViewController {
         snapshot.appendItems(invites.map { .invite($0) }, toSection: .invite)
         
         let segments: [SegmentModel] = [
-            SegmentModel(title: "好友", isSelect: selectCateIndex == 0, badgeCount: invites.count),
-            SegmentModel(title: "聊天", isSelect: selectCateIndex == 1, badgeCount: friends.isEmpty ? 0 : 99)
+            SegmentModel(title: "好友", isSelected: selectCateIndex == 0, badgeCount: invites.count),
+            SegmentModel(title: "聊天", isSelected: selectCateIndex == 1, badgeCount: friends.isEmpty ? 0 : 99)
         ]
         snapshot.appendItems(segments.map { .segment($0) }, toSection: .segment)
         

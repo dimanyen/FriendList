@@ -8,6 +8,7 @@
 
 struct SegmentModel: Hashable {
     let title: String
-    let isSelect: Bool
+    // Rename to follow Swift naming convention.
+    let isSelected: Bool
     let badgeCount: Int
 }
