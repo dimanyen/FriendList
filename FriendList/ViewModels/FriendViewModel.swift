@@ -12,6 +12,8 @@ class FriendViewModel {
     @Published var friends: [Friend] = []
     @Published var invites: [Friend] = []
     @Published private(set) var filteredFriends: [Friend] = []
+    // Expose error messages so the view controller can present them.
+    @Published var errorMessage: String?
     private let type: FriendListType
     private var cancellables = Set<AnyCancellable>()
     
@@ -22,13 +24,10 @@ class FriendViewModel {
     func fetchData() {
         ApiService.shared.fetchUserData()
             .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { complete in
-                switch complete {
-                case .failure(let error):
-                    //TODO: error handle
-                    break
-                default: break
-                    //
+            .sink(receiveCompletion: { [weak self] complete in
+                // Capture any errors so the UI can react accordingly.
+                if case .failure(let error) = complete {
+                    self?.errorMessage = error.localizedDescription
                 }
                 
             }, receiveValue: { [weak self] users in
@@ -44,8 +43,11 @@ class FriendViewModel {
         case .friendsOnly:
             mergeTwoSources()
                 .receive(on: DispatchQueue.main)
-                .sink(receiveCompletion: { _ in
-                    //TODO: error handle
+                .sink(receiveCompletion: { [weak self] completion in
+                    if case .failure(let error) = completion {
+                        // Record the error so UI can display a message.
+                        self?.errorMessage = error.localizedDescription
+                    }
                 }, receiveValue: { [weak self] friends in
                     guard let self = self else { return }
                     self.friends = friends.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
@@ -58,15 +60,18 @@ class FriendViewModel {
         
         publisher
             .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { _ in
-                //TODO: error handle
+            .sink(receiveCompletion: { [weak self] completion in
+                if case .failure(let error) = completion {
+                    // Forward the error message to the UI layer.
+                    self?.errorMessage = error.localizedDescription
+                }
             }, receiveValue: { [weak self] friends in
                 guard let self = self else { return }
                 self.invites = friends
-                    .filter { $0.status == StatusType.inviting.rawValue }
+                    .filter { $0.status == .inviting }
                     .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
                 self.friends = friends
-                    .filter { $0.status != StatusType.inviting.rawValue }
+                    .filter { $0.status != .inviting }
                     .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
             })
             .store(in: &cancellables)
@@ -88,7 +93,8 @@ class FriendViewModel {
         let all = list1 + list2
         
         for friend in all {
-            guard friend.status != StatusType.inviting.rawValue else { continue }
+            // Skip friends still in inviting state when merging lists.
+            guard friend.status != .inviting else { continue }
             if let existing = merged[friend.fid] {
                 let date1 = existing.updateDate.toDate() ?? Date.distantPast
                 let date2 = friend.updateDate.toDate() ?? Date.distantPast

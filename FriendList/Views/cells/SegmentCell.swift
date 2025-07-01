@@ -15,8 +15,8 @@ class SegmentCell: BaseCollectionViewCell {
     
     func configure(_ model: SegmentModel) {
         lblTitle.text = model.title
-        lblTitle.font = model.isSelect ? .boldSystemFont(ofSize: 13.0) : .systemFont(ofSize: 13.0)
-        viewHighlight.isHidden = !model.isSelect
+        lblTitle.font = model.isSelected ? .boldSystemFont(ofSize: 13.0) : .systemFont(ofSize: 13.0)
+        viewHighlight.isHidden = !model.isSelected
         lblBadge.text = (model.badgeCount > 98) ? "99+" : "\(model.badgeCount)"
         viewBadge.isHidden = model.badgeCount == 0
     }

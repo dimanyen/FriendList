@@ -3,7 +3,8 @@ import Combine
 
 class ApiService {
     static let shared = ApiService()
-    private let baseURL = "https://dimanyen.github.io"
+    // Base URL now comes from `NetworkConfig` for easier maintenance.
+    private let baseURL = NetworkConfig.baseURL
 
     private init() {}
 
